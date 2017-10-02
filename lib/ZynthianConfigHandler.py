@@ -10,6 +10,8 @@ from subprocess import check_output
 
 class ZynthianConfigHandler(tornado.web.RequestHandler):
 
+	advanced_view = False
+
 	def get_current_user(self):
 		return self.get_secure_cookie("user")
 
@@ -22,6 +24,10 @@ class ZynthianConfigHandler(tornado.web.RequestHandler):
 			pass
 
 	def update_config(self, config):
+		if 'ADVANCED_VIEW' in config:
+			self.advanced_view = config['ADVANCED_VIEW'][0]
+			logging.info(self.advanced_view)
+			del config['ADVANCED_VIEW']
 		# Get config file content
 		fpath=os.environ.get('ZYNTHIAN_CONFIG_DIR','/zynthian/zynthian-sys/scripts')+"/zynthian_envars.sh"
 		if not os.path.isfile(fpath):
@@ -74,5 +80,8 @@ class ZynthianConfigHandler(tornado.web.RequestHandler):
 		except Exception as e:
 			logging.error("Restarting UI: %s" % e)
 
-	def needsReboot(self):
+	def needs_reboot(self):
 		return False
+
+	def display_advanced_view(self):
+		return self.advanced_view

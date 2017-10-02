@@ -98,7 +98,7 @@ class AudioConfigHandler(ZynthianConfigHandler):
 			}]
 		])
 
-		self.getMixerControls(config)
+		self.get_mixer_controls(config)
 
 		if self.genjson:
 			self.write(config)
@@ -115,10 +115,10 @@ class AudioConfigHandler(ZynthianConfigHandler):
 					call("amixer -M set '" + mixerControl + "' Playback " + self.get_argument(varname) + "% unmute", shell=True)
 				except:
 					pass
-		self.redirect('/api/sys-reboot')
+		#self.redirect('/api/sys-reboot')
 		self.get(errors)
 
-	def getMixerControls(self, config):
+	def get_mixer_controls(self, config):
 		mixerControl = None
 		controlName = ''
 		playbackChannel = False
@@ -130,7 +130,7 @@ class AudioConfigHandler(ZynthianConfigHandler):
 
 				if line.find('Simple mixer control')>=0:
 					if controlName and playbackChannel:
-						self.addMixerControl(config, mixerControl, controlName, volumePercent)
+						self.add_mixer_control(config, mixerControl, controlName, volumePercent)
 					mixerControl = {'type': 'slider',
 						'id': idx,
 						'title': '',
@@ -153,12 +153,12 @@ class AudioConfigHandler(ZynthianConfigHandler):
 					if m:
 						volumePercent = m.group(1)
 			if controlName and playbackChannel:
-				self.addMixerControl(config, mixerControl, controlName, volumePercent)
+				self.add_mixer_control(config, mixerControl, controlName, volumePercent)
 		except:
 			pass
 
 
-	def addMixerControl(self, config, mixerControl, controlName, volumePercent):
+	def add_mixer_control(self, config, mixerControl, controlName, volumePercent):
 		validMixer = ''
 		if os.environ.get('SOUNDCARD_NAME'):
 			validMixer = self.soundcard_mixer_controls[os.environ.get('SOUNDCARD_NAME')]
@@ -171,5 +171,5 @@ class AudioConfigHandler(ZynthianConfigHandler):
 
 			config[configKey] = mixerControl
 
-	def needsReboot(self):
+	def needs_reboot(self):
 		return True

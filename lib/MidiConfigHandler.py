@@ -145,13 +145,13 @@ class MidiConfigHandler(ZynthianConfigHandler):
 	def post(self):
 		escaped_request_arguments = tornado.escape.recursive_unicode(self.request.arguments)
 		if 'FILTER_ADD_COMMAND' in escaped_request_arguments and 'FILTER_ADD_MIDI_EVENT' in escaped_request_arguments:
-			self.calculateTranslation(escaped_request_arguments)
+			self.calculate_translation(escaped_request_arguments)
 		self.request.arguments['ZYNTHIAN_PRESET_PRELOAD_NOTEON'] = self.request.arguments.get('ZYNTHIAN_PRESET_PRELOAD_NOTEON','0')
 		errors=self.update_config(escaped_request_arguments)
 		self.restart_ui()
 		self.get(errors)
 
-	def calculateTranslation(self, escaped_request_arguments):
+	def calculate_translation(self, escaped_request_arguments):
 		if escaped_request_arguments['FILTER_ADD_COMMAND'][0]:
 			channels = ''
 			if 'FILTER_ADD_CHANNEL' in escaped_request_arguments and escaped_request_arguments['FILTER_ADD_CHANNEL'][0]:

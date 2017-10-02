@@ -1,8 +1,14 @@
-
-<h2>{{ escape(title) }}</h2>
-
 <form method="post">
+	<div id="advanced-view-panel" style="margin-left:auto; margin-right:0;text-align:right;">
+		<input type="checkbox" name="ADVANCED_VIEW" value="1" {% if handler.display_advanced_view() %} CHECKED {% end %} }} onChange="this.form.submit()" /><span>Advanced view</span>
+	</div>
+	<h2>{{ escape(title) }}</h2>
+
+
+
 {% for varname in config %}
+  <div style="display: {% if handler.display_advanced_view() or not 'advanced' in config[varname] %}block{%else%}none{% end %};">
+
 	<label>{{ escape(config[varname]['title']) }}:</label>
 	{% if config[varname]['type'] != 'boolean' %} <br>{% end %}
 	{% if config[varname]['type']=='text' %}
@@ -52,11 +58,11 @@
 	<br>
 	{% if errors and varname in errors %}<div class="alert alert-danger">{{ escape(errors[varname]) }}</div>{% end %}
 	<br>
-  {% end %}
+	</div>
+	{% end %}
 	<br>
-
 	<input type="submit" value="Save" class="btn btn-lg btn-theme" />
-	{% if handler.needsReboot() == True %}
+	{% if handler.needs_reboot() == True %}
 	<span class="label label-info">The zynthian will be rebooted if you save the changes.</span>
 	{% end %}
 </form>
