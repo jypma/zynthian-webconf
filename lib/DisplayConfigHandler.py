@@ -190,7 +190,8 @@ class DisplayConfigHandler(ZynthianConfigHandler):
 		errors=self.update_config(tornado.escape.recursive_unicode(self.request.arguments))
 		self.delete_fb_splash() # New splash-screens will be generated on next boot
 		#self.restart_ui()
-		self.redirect('/api/sys-reboot')
+		if not self.is_advanced_view_changed():
+			self.redirect('/api/sys-reboot')
 		self.get(errors)
 
 	def delete_fb_splash(self):

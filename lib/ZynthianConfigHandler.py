@@ -11,6 +11,7 @@ from subprocess import check_output
 class ZynthianConfigHandler(tornado.web.RequestHandler):
 
 	advanced_view = False
+	advanced_view_changed = False
 
 	def get_current_user(self):
 		return self.get_secure_cookie("user")
@@ -25,8 +26,12 @@ class ZynthianConfigHandler(tornado.web.RequestHandler):
 
 	def update_config(self, config):
 		if 'ADVANCED_VIEW' in config:
+			if 'ADVANCED_VIEW_CHANGED' in config:
+				if config['ADVANCED_VIEW_CHANGED'][0]:
+					self.advanced_view_changed = True
+				del config['ADVANCED_VIEW_CHANGED']
+
 			self.advanced_view = config['ADVANCED_VIEW'][0]
-			logging.info(self.advanced_view)
 			del config['ADVANCED_VIEW']
 		# Get config file content
 		fpath=os.environ.get('ZYNTHIAN_CONFIG_DIR','/zynthian/zynthian-sys/scripts')+"/zynthian_envars.sh"
@@ -85,3 +90,7 @@ class ZynthianConfigHandler(tornado.web.RequestHandler):
 
 	def display_advanced_view(self):
 		return self.advanced_view
+
+
+	def is_advanced_view_changed(self):
+		return self.advanced_view_changed

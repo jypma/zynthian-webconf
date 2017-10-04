@@ -1,6 +1,7 @@
 <form method="post">
 	<div id="advanced-view-panel" style="margin-left:auto; margin-right:0;text-align:right;">
-		<input type="checkbox" name="ADVANCED_VIEW" value="1" {% if handler.display_advanced_view() %} CHECKED {% end %} }} onChange="this.form.submit()" /><span>Advanced view</span>
+		<input type="hidden" id="ADVANCED_VIEW_CHANGED" name="ADVANCED_VIEW_CHANGED" />
+		<input type="checkbox" id="ADVANCED_VIEW" name="ADVANCED_VIEW" value="1" {% if handler.display_advanced_view() %} CHECKED {% end %} }} onChange="document.getElementById('ADVANCED_VIEW_CHANGED').value='1';this.form.submit();" /><span>Advanced view</span>
 	</div>
 	<h2>{{ escape(title) }}</h2>
 
@@ -61,7 +62,7 @@
 	</div>
 	{% end %}
 	<br>
-	<input type="submit" value="Save" class="btn btn-lg btn-theme" />
+	<input type="submit" value="Save" onsubmit="document.getElementById('ADVANCED_VIEW_CHANGED').value='';this.form.submit();" class="btn btn-lg btn-theme" />
 	{% if handler.needs_reboot() == True %}
 	<span class="label label-info">The zynthian will be rebooted if you save the changes.</span>
 	{% end %}

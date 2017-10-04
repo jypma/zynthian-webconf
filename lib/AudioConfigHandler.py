@@ -115,7 +115,8 @@ class AudioConfigHandler(ZynthianConfigHandler):
 					call("amixer -M set '" + mixerControl + "' Playback " + self.get_argument(varname) + "% unmute", shell=True)
 				except:
 					pass
-		#self.redirect('/api/sys-reboot')
+		if not self.is_advanced_view_changed():
+			self.redirect('/api/sys-reboot')
 		self.get(errors)
 
 	def get_mixer_controls(self, config):
