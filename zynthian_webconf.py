@@ -86,7 +86,7 @@ def make_app():
 		(r"/api/sys-wifi$", WifiConfigHandler),
 		(r"/api/sys-backup$", SystemBackupHandler),
 		(r"/api/sys-update$", SystemUpdateHandler),
-		(r"/api/sys-update-log$", UpdateLogHandler),
+		(r"/api/sys-update-exec$", UpdateLogHandler),
 		(r"/api/sys-security$", SecurityConfigHandler),
 		(r"/api/sys-reboot$", RebootHandler),
 		(r"/api/wifi/list$", WifiListHandler),

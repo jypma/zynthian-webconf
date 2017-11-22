@@ -34,11 +34,10 @@ import zipfile
 from io import BytesIO
 from collections import OrderedDict
 import subprocess
-import time
 
 UPDATE_COMMANDS = {
-	'Software' : '/zynthian/zynthian-webconf/update_test.sh',
-	'Library' : '/zynthian/zynthian-webconf/update_test.sh'}
+	'Software' : '/zynthian/zynthian-sys/scripts/update_zynthian.sh',
+	'Library' : '/zynthian/zynthian-sys/scripts/update_zynthian_data.sh'}
 #------------------------------------------------------------------------------
 # SystemUpdateHandler Config Handler
 #------------------------------------------------------------------------------
@@ -71,9 +70,16 @@ class UpdateLogHandler(tornado.websocket.WebSocketHandler):
 	def open(self):
 		logging.info("UpdateLogHandler opened")
 
+
 	def on_message(self, update_command):
 		p = subprocess.Popen(UPDATE_COMMANDS[update_command], shell=True, stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
-		for line in p.stdout: self.write_message(line.decode())
+		for line in p.stdout:
+			logging.info(line.decode())
+			self.write_message(line.decode())
+		self.write_message("EOCOMMAND")
 
 	def on_close(self):
 		logging.info("UpdateLogHandler closed")
+
+	def on_finish(self):
+		logging.info("UpdateLogHandler finished")
