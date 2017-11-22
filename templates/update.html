@@ -1,0 +1,16 @@
+<h2>{{ escape(title) }}</h2>
+
+<form id="update-form" enctype="multipart/form-data" method="post">
+<div class="container-fluid">
+  <div class="row">
+		{% for update_item in config['UPDATE_COMMANDS'] %}
+		<button name="ZYNTHIAN_UPDATE_ACTION" value="{{ update_item }}" class="btn btn-lg btn-theme">{{ update_item }}</button>
+		{% end %}
+	</div>
+
+</div>
+
+</form>
+
+
+</script>

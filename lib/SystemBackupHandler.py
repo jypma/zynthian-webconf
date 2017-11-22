@@ -35,7 +35,7 @@ from collections import OrderedDict
 
 
 #------------------------------------------------------------------------------
-# Snapshot Config Handler
+# SystemBackupHandler Config Handler
 #------------------------------------------------------------------------------
 
 class SystemBackupHandler(tornado.web.RequestHandler):

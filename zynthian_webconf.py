@@ -43,6 +43,7 @@ from lib.SnapshotConfigHandler import SnapshotConfigHandler
 from lib.MidiConfigHandler import MidiConfigHandler
 from lib.soundfont_config_handler import SoundfontConfigHandler
 from lib.SystemBackupHandler import SystemBackupHandler
+from lib.system_update_handler import SystemUpdateHandler, UpdateLogHandler
 from lib.presets_config_handler import PresetsConfigHandler
 
 #------------------------------------------------------------------------------
@@ -80,6 +81,8 @@ def make_app():
 		(r"/api/ui-midi$", MidiConfigHandler),
 		(r"/api/sys-wifi$", WifiConfigHandler),
 		(r"/api/sys-backup$", SystemBackupHandler),
+		(r"/api/sys-update$", SystemUpdateHandler),
+		(r"/api/sys-update-log$", UpdateLogHandler),
 		(r"/api/sys-security$", SecurityConfigHandler),
 		(r"/api/sys-reboot$", RebootHandler),
 		(r"/api/wifi/list$", WifiListHandler),
