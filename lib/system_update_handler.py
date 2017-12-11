@@ -34,8 +34,11 @@ import zipfile
 from io import BytesIO
 from collections import OrderedDict
 import subprocess
+import jsonpickle
+from lib.zynthian_websocket_handler import ZynthianWebSocketMessageHandler, ZynthianWebSocketMessage
 
 UPDATE_COMMANDS = {
+	'Diagnosis' : 'ls /zynthian/zynthian-sys/scripts',
 	'Software' : '/zynthian/zynthian-sys/scripts/update_zynthian.sh',
 	'Library' : '/zynthian/zynthian-sys/scripts/update_zynthian_data.sh'}
 #------------------------------------------------------------------------------
@@ -66,20 +69,18 @@ class SystemUpdateHandler(tornado.web.RequestHandler):
 		else:
 			self.render("config.html", body="update.html", config=config, title="Update", errors=errors)
 
-class UpdateLogHandler(tornado.websocket.WebSocketHandler):
-	def open(self):
-		logging.info("UpdateLogHandler opened")
+class SystemUpdateMessageHandler(ZynthianWebSocketMessageHandler):
+	@classmethod
+	def is_registered_for(cls, handler_name):
+		return handler_name == 'SystemUpdateMessageHandler'
 
 
-	def on_message(self, update_command):
+
+	def on_websocket_message(self, update_command):
 		p = subprocess.Popen(UPDATE_COMMANDS[update_command], shell=True, stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
 		for line in p.stdout:
 			logging.info(line.decode())
-			self.write_message(line.decode())
-		self.write_message("EOCOMMAND")
-
-	def on_close(self):
-		logging.info("UpdateLogHandler closed")
-
-	def on_finish(self):
-		logging.info("UpdateLogHandler finished")
+			message = ZynthianWebSocketMessage('SystemUpdateMessageHandler', line.decode())
+			self.websocket.write_message(jsonpickle.encode(message))
+		message = ZynthianWebSocketMessage('SystemUpdateMessageHandler', "EOCOMMAND")
+		self.websocket.write_message(jsonpickle.encode(message))

@@ -8,57 +8,50 @@
 		{% end %}
 	</div>
 	<div class="row">
-		<div id="update-log"></div>
+		<div id="update-log" class="log-panel"></div>
 	</div>
 </div>
 
 </form>
 
 <script>
-var socket;
+
+$(document).ready(function (){
+    $(':button').prop('disabled', true);
+
+		var deferred = $.Deferred();
+		deferred.done(function(value) {
+			$(':button').prop('disabled', false);
+		});
+		connectZynthianWebSocket(deferred);
+});
+
 
 function executeUpdate(update_action){
-	var url = window.location.href
-	var parts = url.split("/");
-	var sendUpdateAction = function(){
-		var logDiv = $("#update-log");
-		logDiv.addClass("updating");
-		logDiv.html('');
-		socket.send(update_action);
-	}
-	if (socket == undefined){
-		socket = new ws("ws://"+parts[2]+"/api/sys-update-exec");
-	} else {
-		if (socket.readyState == 1) {
-				sendUpdateAction();
-		}
-	}
 
-	socket.onconnecting = function(evn){
-		console.log("socket:onconnecting:",evn);
-		// sendMsg("wcj");
-	}
-	socket.onopen = function(evn){
-		console.log("socket:onopen:",evn);
+	var logDiv = $("#update-log");
+	logDiv.addClass("updating");
+	logDiv.html('');
 
-		sendUpdateAction();
-	}
-	socket.onclose = function(evn){
-		console.log("socket.onclose:",evn);
-		socket.close();
-	}
+	var socketMessage = {"handler_name": "SystemUpdateMessageHandler",
+		"data": update_action};
+	//zynthiansocket = connectWebsocket();
 
-	socket.onmessage = function(evt){
-		if (evt.data){
+	window.zynthianSocket.registerHandler('SystemUpdateMessageHandler', function(data) {
+		if (data){
 			var logDiv = $("#update-log");
-			if (evt.data == "EOCOMMAND"){
+			if (data == "EOCOMMAND"){
 				logDiv.removeClass("updating");
 			} else {
-				console.log("socket:onmessage:",evt.data);
-				logDiv.append(evt.data + "<br />");
+				console.log("socket:onmessage:",data);
+				logDiv.append(data + "<br />");
 				logDiv[0].scrollTop = logDiv[0].scrollHeight;
 			}
 		}
-	}
+	});
+	window.zynthianSocket.send(JSON.stringify(socketMessage));
+
+
+
 }
 </script>
