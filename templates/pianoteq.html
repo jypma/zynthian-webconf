@@ -65,7 +65,19 @@
 			<p>
 				<button name="ZYNTHIAN_PIANOTEQ_ACTION" value="ADD_LICENCE" class="btn btn-lg btn-theme">Add licence</button>
 			</p>
-		-->
+			-->
+			<p>
+				If you changed your engine by installing new modules you might need to clean the preset cache.
+				In the case you want to do this on each start of the zynthian. This slows down the startup procedure by approx. 5 seconds.
+			</p>
+			<p>
+				<input type="checkbox" id="ZYNTHIAN_PIANOTEQ_CLEAN_PRESET_ON_BOOT" name="ZYNTHIAN_PIANOTEQ_CLEAN_PRESET_ON_BOOT" /> Clean presets cache on boot
+				<button name="ZYNTHIAN_PIANOTEQ_ACTION" value="SAVE" class="btn btn-lg btn-theme">Save</button>
+			</p>
+			<p>
+				<button name="ZYNTHIAN_PIANOTEQ_ACTION" value="CLEAN_PRESET_CACHE" class="btn btn-lg btn-theme">Clean presets cache now!</button>
+			</p>
+
 		</div>
 
   </div>

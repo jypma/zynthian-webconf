@@ -41,7 +41,7 @@ from lib.ZynthianConfigHandler import ZynthianConfigHandler
 # Soundfont Configuration
 #------------------------------------------------------------------------------
 
-class PianoteqHandler(tornado.web.RequestHandler):
+class PianoteqHandler(ZynthianConfigHandler):
 
 	PIANOTEQ_SW_DIR = r'/zynthian/zynthian-sw/pianoteq6'
 	PIANOTEQ_ADDON_DIR = os.path.expanduser("~")  + '/.local/share/Modartt/Pianoteq/Addons'
@@ -64,20 +64,35 @@ class PianoteqHandler(tornado.web.RequestHandler):
 		config=OrderedDict([])
 		config['ZYNTHIAN_UPLOAD_MULTIPLE'] = False
 		config['ZYNTHIAN_PIANOTEQ_LICENCE'] = self.get_licence_key()
+
 		if self.genjson:
 			self.write(config)
 		else:
 			self.render("config.html", body="pianoteq.html", config=config, title="Pianoteq", errors=errors)
 
 	def post(self):
+
+
 		action = self.get_argument('ZYNTHIAN_PIANOTEQ_ACTION')
 		if action:
 			errors = {
 				'INSTALL_PIANOTEQ': lambda: self.do_install_pianoteq(),
-				'ADD_LICENCE': lambda: self.do_install_licence()
+				'ADD_LICENCE': lambda: self.do_install_licence(),
+				'SAVE': lambda: self.do_save_config_parameters(),
+				'CLEAN_PRESET_CACHE': lambda: self.do_clean_preset_cache()
 			}[action]()
+
+
+
 		self.get(errors)
 
+	def do_save_config_parameters(self):
+		envConfig=OrderedDict([])
+		envConfig['ZYNTHIAN_PIANOTEQ_CLEAN_PRESET_ON_BOOT'] = self.request.arguments.get('ZYNTHIAN_PIANOTEQ_CLEAN_PRESET_ON_BOOT','0')
+		errors=self.update_config(tornado.escape.recursive_unicode(envConfig))
+
+	def do_clean_preset_cache(self):
+		logging.info("Your job, Fernando")
 
 	def do_install_licence(self):
 		licence = self.get_argument('ZYNTHIAN_PIANOTEQ_LICENCE');
