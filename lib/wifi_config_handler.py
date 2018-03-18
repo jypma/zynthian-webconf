@@ -126,18 +126,8 @@ class WifiConfigHandler(tornado.web.RequestHandler):
 	def post(self):
 		hostapd_parameters = self.get_hostapd_parameters()
 
-		has_new_name = self.set_hostapd_parameter(self.HOSTAPD_SSID,  self.get_argument('ZYNTHIAN_WIFI_HOSTAPD_NAME'), hostapd_parameters)
+		self.post_hostapd(hostapd_parameters)
 
-		hostapd_password =  self.get_argument('ZYNTHIAN_WIFI_HOSTAPD_PASSWORD')
-		if hostapd_password:
-			 self.set_hostapd_parameter(self.HOSTAPD_PWD,  hostapd_password, hostapd_parameters)
-
-		if hostapd_password or has_new_name:
-			self.hostapd_systemctl("0")
-
-		hostapd_active = self.request.arguments.get('ZYNTHIAN_WIFI_HOSTAPD_ACTIVE','0')[0]
-
-		hostapd_parameters[self.HOSTAPD_SERVICE_ACTIVITY_CHANGED] = self.hostapd_systemctl("1" if has_new_name or hostapd_password else hostapd_active)
 
 		wpa_supplicant_data = self.get_argument('ZYNTHIAN_WIFI_WPA_SUPPLICANT')
 		fieldNames = ["ZYNTHIAN_WIFI_PRIORITY"]
@@ -152,6 +142,21 @@ class WifiConfigHandler(tornado.web.RequestHandler):
 		fo.close()
 
 		errors=self.do_get(hostapd_parameters)
+
+	def post_hostapd(self, hostapd_parameters):
+		if len(hostapd_parameters)>0:
+			has_new_name = self.set_hostapd_parameter(self.HOSTAPD_SSID,  self.get_argument('ZYNTHIAN_WIFI_HOSTAPD_NAME'), hostapd_parameters)
+
+			hostapd_password =  self.get_argument('ZYNTHIAN_WIFI_HOSTAPD_PASSWORD')
+			if hostapd_password:
+				self.set_hostapd_parameter(self.HOSTAPD_PWD,  hostapd_password, hostapd_parameters)
+
+			if hostapd_password or has_new_name:
+				self.hostapd_systemctl("0")
+
+			hostapd_active = self.request.arguments.get('ZYNTHIAN_WIFI_HOSTAPD_ACTIVE','0')[0]
+
+			hostapd_parameters[self.HOSTAPD_SERVICE_ACTIVITY_CHANGED] = self.hostapd_systemctl("1" if has_new_name or hostapd_password else hostapd_active)
 
 
 	def get_supplicant_file_name(self):
