@@ -44,7 +44,7 @@ class WifiConfigHandler(tornado.web.RequestHandler):
 	HOSTAPD_SSID = "ssid"
 	HOSTAPD_PWD = "wpa_passphrase"
 	HOSTAPD_SERVICE_ACTIVITY_CHANGED = "servicve_activity_changed"
-	HOSTAPD_SERVICE = "a2jmidid.service"
+	HOSTAPD_SERVICE = "autohotspot"
 
 
 	def get_current_user(self):
