@@ -260,7 +260,6 @@ class WifiConfigHandler(tornado.web.RequestHandler):
 		try:
 			old_value = old_values[field] if field in old_values else ''
 			if 	old_value != value:
-				logging.info("change value")
 				subprocess.call("export NEW_VALUE=%(new_value)s ; sudo sed -i \"s/%(field)s=.*/%(field)s=${NEW_VALUE}/g\" %(file)s" % {'new_value': value, 'field': field, 'file': self.HOSTAPD_FILE}, shell = True)
 				old_values[field] = value
 				return True
