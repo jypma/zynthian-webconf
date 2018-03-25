@@ -28,6 +28,7 @@ import logging
 import base64
 import tornado.web
 import subprocess
+#from crontab import CronTab
 from collections import OrderedDict
 
 
@@ -43,7 +44,7 @@ class WifiConfigHandler(tornado.web.RequestHandler):
 	HOSTAPD_FILE = "/etc/hostapd/hostapd.conf"
 	HOSTAPD_SSID = "ssid"
 	HOSTAPD_PWD = "wpa_passphrase"
-	HOSTAPD_SERVICE_ACTIVITY_CHANGED = "servicve_activity_changed"
+	HOSTAPD_SERVICE_ACTIVITY_CHANGED = "service_activity_changed"
 	HOSTAPD_SERVICE = "autohotspot"
 
 
@@ -258,9 +259,10 @@ class WifiConfigHandler(tornado.web.RequestHandler):
 
 	def set_hostapd_parameter(self, field, value, old_values):
 		try:
+			logging.info("new value: " + value)
 			old_value = old_values[field] if field in old_values else ''
 			if 	old_value != value:
-				subprocess.call("export NEW_VALUE=%(new_value)s ; sudo sed -i \"s/%(field)s=.*/%(field)s=${NEW_VALUE}/g\" %(file)s" % {'new_value': value, 'field': field, 'file': self.HOSTAPD_FILE}, shell = True)
+				subprocess.call("export NEW_VALUE=\"%(new_value)s\" ; sudo sed -i \"s/^%(field)s=.*/%(field)s=${NEW_VALUE}/g\" %(file)s" % {'new_value': value, 'field': field, 'file': self.HOSTAPD_FILE}, shell = True)
 				old_values[field] = value
 				return True
 		except subprocess.CalledProcessError as e:

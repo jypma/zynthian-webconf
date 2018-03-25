@@ -29,17 +29,17 @@
 
 	<ul class="nav nav-tabs" role="tablist">
 		{% for network in config['ZYNTHIAN_WIFI_NETWORKS'] %}
-	  <li {% if network['idx']==0 and not config['servicve_activity_changed'] %}class="active"{% end %}><a href="#{{  network['ssid64'] }}" role="tab" data-toggle="tab">{{ network['ssid'] }}</a></li>
+	  <li {% if network['idx']==0 and not config['service_activity_changed'] %}class="active"{% end %}><a href="#{{  network['ssid64'] }}" role="tab" data-toggle="tab">{{ network['ssid'] }}</a></li>
 		{% end %}
 		<li ><a href="#wpa_supplicant" role="tab" data-toggle="tab">{{ config['ZYNTHIAN_WIFI_WPA_SUPPLICANT']['title'] }}</a></li>
 		{% if config['ZYNTHIAN_WIFI_HOSTAPD_EXISTS'] %}
-		<li {% if config['servicve_activity_changed'] %}class="active"{% end %}><a href="#wifi_hotspot" role="tab" data-toggle="tab">WIFI Hotspot</a></li>
+		<li {% if config['service_activity_changed'] %}class="active"{% end %}><a href="#wifi_hotspot" role="tab" data-toggle="tab">WIFI Hotspot</a></li>
 		{% end %}
 	</ul>
 
 	<div class="tab-content">
 	  {% for network in config['ZYNTHIAN_WIFI_NETWORKS'] %}
-		<div class="tab-pane {% if network['idx']==0 and not config['servicve_activity_changed'] %}active{% end %}" id="{{ network['ssid64'] }}">
+		<div class="tab-pane {% if network['idx']==0 and not config['service_activity_changed'] %}active{% end %}" id="{{ network['ssid64'] }}">
 				<label>Passphrase:</label><br />
 			  <input name="ZYNTHIAN_WIFI_PSK_{{ network['ssid'] }}" /><br />
  				<span class="label label-info">This field is always empty, because no passwords will be displayed for security reasons.</span><br />
@@ -60,8 +60,8 @@
 
 
 		{% if config['ZYNTHIAN_WIFI_HOSTAPD_EXISTS'] %}
-		<div class="tab-pane {% if config['servicve_activity_changed'] %}active{% end %}" id="wifi_hotspot">
-			{% if config['servicve_activity_changed'] %}
+		<div class="tab-pane {% if config['service_activity_changed'] %}active{% end %}" id="wifi_hotspot">
+			{% if config['service_activity_changed'] %}
 			<span class="label label-info">The status of the service changed</span><br />
 
 			{% end %}
