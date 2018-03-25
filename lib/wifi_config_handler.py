@@ -27,6 +27,7 @@ import re
 import logging
 import base64
 import tornado.web
+import subprocess
 from collections import OrderedDict
 
 
@@ -36,8 +37,14 @@ from collections import OrderedDict
 
 class WifiConfigHandler(tornado.web.RequestHandler):
 
-	passwordMask = "*****"
-	fieldMap = { "ZYNTHIAN_WIFI_PRIORITY": "priority" }
+
+	PASSWORD_MASK = "*****"
+	WPA_FIELD_MAP = { "ZYNTHIAN_WIFI_PRIORITY": "priority" }
+	HOSTAPD_FILE = "/etc/hostapd/hostapd.conf"
+	HOSTAPD_SSID = "ssid"
+	HOSTAPD_PWD = "wpa_passphrase"
+	HOSTAPD_SERVICE_ACTIVITY_CHANGED = "servicve_activity_changed"
+	HOSTAPD_SERVICE = "a2jmidid.service"
 
 
 	def get_current_user(self):
@@ -55,8 +62,14 @@ class WifiConfigHandler(tornado.web.RequestHandler):
 
 	@tornado.web.authenticated
 	def get(self, errors=None):
+		hostapd_parameters = self.get_hostapd_parameters()
+		self.do_get(hostapd_parameters, errors)
+
+	@tornado.web.authenticated
+	def do_get(self, hostapd_parameters, errors=None):
+
 		supplicant_file_name = self.get_supplicant_file_name()
-		supplicant_data = re.sub(r'psk=".*?"', 'psk="' + WifiConfigHandler.passwordMask + '"',
+		supplicant_data = re.sub(r'psk=".*?"', 'psk="' + WifiConfigHandler.PASSWORD_MASK + '"',
 			self.read_supplicant_data(supplicant_file_name),
 			re.I | re.M | re.S )
 		p = re.compile('.*?network=\\{.*?ssid=\\"(.*?)\\".*?psk=\\"(.*?)\\".*?priority=(\d*).*?\\}.*?', re.I | re.M | re.S )
@@ -68,7 +81,23 @@ class WifiConfigHandler(tornado.web.RequestHandler):
 				'rows': 20,
 				'title': 'Advanced Config',
 				'value': supplicant_data
+			}],
+			['ZYNTHIAN_WIFI_HOSTAPD_EXISTS', len(hostapd_parameters)>0],
+			['ZYNTHIAN_WIFI_HOSTAPD_ACTIVE', {
+				'type': 'checkbox',
+				'title': 'Active',
+				'value': self.is_hostapd_active()
+			}],
+			['ZYNTHIAN_WIFI_HOSTAPD_NAME', {
+				'type': 'text',
+				'title': 'Hotspot name',
+				'value':  hostapd_parameters[self.HOSTAPD_SSID] if self.HOSTAPD_SSID in hostapd_parameters else ''
+			}],
+			['ZYNTHIAN_WIFI_HOSTAPD_PASSWORD', {
+				'type': 'password',
+				'title': 'Password'
 			}]
+
 		])
 
 		networks = []
@@ -85,6 +114,8 @@ class WifiConfigHandler(tornado.web.RequestHandler):
 
 		config['ZYNTHIAN_WIFI_NETWORKS'] = networks
 
+		config[self.HOSTAPD_SERVICE_ACTIVITY_CHANGED] = hostapd_parameters[self.HOSTAPD_SERVICE_ACTIVITY_CHANGED] if self.HOSTAPD_SERVICE_ACTIVITY_CHANGED in hostapd_parameters else False
+
 		if self.genjson:
 			self.write(config)
 		else:
@@ -93,6 +124,21 @@ class WifiConfigHandler(tornado.web.RequestHandler):
 
 	@tornado.web.authenticated
 	def post(self):
+		hostapd_parameters = self.get_hostapd_parameters()
+
+		has_new_name = self.set_hostapd_parameter(self.HOSTAPD_SSID,  self.get_argument('ZYNTHIAN_WIFI_HOSTAPD_NAME'), hostapd_parameters)
+
+		hostapd_password =  self.get_argument('ZYNTHIAN_WIFI_HOSTAPD_PASSWORD')
+		if hostapd_password:
+			 self.set_hostapd_parameter(self.HOSTAPD_PWD,  hostapd_password, hostapd_parameters)
+
+		if hostapd_password or has_new_name:
+			self.hostapd_systemctl("0")
+
+		hostapd_active = self.request.arguments.get('ZYNTHIAN_WIFI_HOSTAPD_ACTIVE','0')[0]
+
+		hostapd_parameters[self.HOSTAPD_SERVICE_ACTIVITY_CHANGED] = self.hostapd_systemctl("1" if has_new_name or hostapd_password else hostapd_active)
+
 		wpa_supplicant_data = self.get_argument('ZYNTHIAN_WIFI_WPA_SUPPLICANT')
 		fieldNames = ["ZYNTHIAN_WIFI_PRIORITY"]
 		wpa_supplicant_data = self.apply_updated_fields(wpa_supplicant_data, fieldNames)
@@ -104,7 +150,8 @@ class WifiConfigHandler(tornado.web.RequestHandler):
 		fo.write(wpa_supplicant_data)
 		fo.flush()
 		fo.close()
-		errors=self.get()
+
+		errors=self.do_get(hostapd_parameters)
 
 
 	def get_supplicant_file_name(self):
@@ -143,7 +190,7 @@ class WifiConfigHandler(tornado.web.RequestHandler):
 
 					mNewSupplicantData = re.match('.*ssid="' + m.group(1) + '".*?psk="(.*?)".*', wpa_supplicant_data, re.I | re.M | re.S)
 					if mNewSupplicantData:
-						if not newPassword and  not mNewSupplicantData.group(1) == WifiConfigHandler.passwordMask:
+						if not newPassword and  not mNewSupplicantData.group(1) == self.PASSWORD_MASK:
 							newPassword = mNewSupplicantData.group(1)
 					if not newPassword: newPassword = m.group(2)
 
@@ -154,7 +201,7 @@ class WifiConfigHandler(tornado.web.RequestHandler):
 						fieldUpdated =  self.get_argument(fieldName + '_' + m.group(1) + '_UPDATED')
 						if fieldUpdated:
 							fieldValue =  self.get_argument(fieldName + '_' + m.group(1))
-							regexp = 'ssid=\\"' + m.group(1) + '\\"(?P<pre>.*?' + self.fieldMap[fieldName] + '=)\\S+(?P<post>.*\\})'
+							regexp = 'ssid=\\"' + m.group(1) + '\\"(?P<pre>.*?' + self.WPA_FIELD_MAP[fieldName] + '=)\\S+(?P<post>.*\\})'
 							pReplacement = re.compile(regexp, re.I | re.M | re.S )
 							wpa_supplicant_data = pReplacement.sub("ssid=\"" + m.group(1) + "\"" + r'\g<pre>' + str(fieldValue) + r'\g<post> ', wpa_supplicant_data)
 
@@ -166,3 +213,52 @@ class WifiConfigHandler(tornado.web.RequestHandler):
 		wpa_supplicant_data += newSSID
 		wpa_supplicant_data += '"\n\tscan_ssid=1\n\tkey_mgmt=WPA-PSK\n\tpsk=""\n\tpriority=10\n}'
 		return wpa_supplicant_data
+
+	def get_hostapd_parameters(self):
+		hostapd_parameters = {}
+		if os.path.isfile(self.HOSTAPD_FILE):
+			with open(self.HOSTAPD_FILE) as hostapd_file:
+				for line in hostapd_file:
+					(key, value) = line.split("=")
+					if key == self.HOSTAPD_SSID:
+						hostapd_parameters[key] = value.strip()
+
+
+		return hostapd_parameters
+
+	def is_hostapd_active(self):
+		try:
+			result = subprocess.check_output(['systemctl','is-active',self.HOSTAPD_SERVICE])
+
+			if result.strip().decode("utf-8") == "active":
+				return "1"
+		except subprocess.CalledProcessError as e:
+			pass
+		return "0"
+
+	def hostapd_systemctl(self, target_value):
+		current_value = self.is_hostapd_active();
+		try:
+			target_value = str(target_value,"UTF-8")
+		except:
+			pass
+		if current_value != target_value:
+			try:
+				result = subprocess.check_output(['systemctl','start' if target_value == "1" else 'stop',self.HOSTAPD_SERVICE])
+				logging.info("%s %s" % (self.HOSTAPD_SERVICE, 'started' if target_value == "1" else 'stopped'))
+				return True
+			except subprocess.CalledProcessError as e:
+				pass
+		return False
+
+	def set_hostapd_parameter(self, field, value, old_values):
+		try:
+			old_value = old_values[field] if field in old_values else ''
+			if 	old_value != value:
+				logging.info("change value")
+				subprocess.call("export NEW_VALUE=%(new_value)s ; sudo sed -i \"s/%(field)s=.*/%(field)s=${NEW_VALUE}/g\" %(file)s" % {'new_value': value, 'field': field, 'file': self.HOSTAPD_FILE}, shell = True)
+				old_values[field] = value
+				return True
+		except subprocess.CalledProcessError as e:
+			logging.info(str(e))
+		return False
