@@ -259,7 +259,6 @@ class WifiConfigHandler(tornado.web.RequestHandler):
 
 	def set_hostapd_parameter(self, field, value, old_values):
 		try:
-			logging.info("new value: " + value)
 			old_value = old_values[field] if field in old_values else ''
 			if 	old_value != value:
 				subprocess.call("export NEW_VALUE=\"%(new_value)s\" ; sudo sed -i \"s/^%(field)s=.*/%(field)s=${NEW_VALUE}/g\" %(file)s" % {'new_value': value, 'field': field, 'file': self.HOSTAPD_FILE}, shell = True)
